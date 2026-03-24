@@ -16,8 +16,8 @@ A Flask-based REST API for managing a retail inventory, with OpenFoodFacts integ
 ### Clone and install dependencies
 
 ```bash
-git clone <repo-url>
-cd course-8-module-5-flask-full-crud-api-lab
+git clone https://github.com/ronnyabuto/inventory-management-system.git
+cd inventory-management-system
 pipenv install
 pipenv shell
 ```
