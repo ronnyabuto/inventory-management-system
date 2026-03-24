@@ -193,8 +193,10 @@ def lookup_product():
                 print(f"No product found for barcode: {barcode}")
                 return
             r.raise_for_status()
+            product = r.json()
             print("\nProduct found:")
-            print_off_product(r.json())
+            print_off_product(product)
+            _prompt_add_to_inventory(product)
         except requests.ConnectionError:
             print("Error: Cannot connect to the API server.")
         except requests.HTTPError as e:
@@ -216,12 +218,48 @@ def lookup_product():
             for i, product in enumerate(results, 1):
                 print(f"\n[{i}]", end="")
                 print_off_product(product)
+            sel = input("\nEnter number to add to inventory (or 0 to skip): ").strip()
+            if sel.isdigit():
+                idx = int(sel)
+                if 1 <= idx <= len(results):
+                    _prompt_add_to_inventory(results[idx - 1])
         except requests.ConnectionError:
             print("Error: Cannot connect to the API server.")
         except requests.HTTPError as e:
             print(f"Error: {e}")
     else:
         print("Invalid choice.")
+
+
+def _prompt_add_to_inventory(product):
+    confirm = input("\nAdd this item to inventory? (y/N): ").strip().lower()
+    if confirm != "y":
+        return
+    price = input("  Price: ").strip()
+    stock = input("  Stock quantity: ").strip()
+    try:
+        payload = {
+            "product_name": product.get("product_name", ""),
+            "brand": product.get("brand", ""),
+            "category": product.get("category", ""),
+            "barcode": product.get("barcode", ""),
+            "ingredients_text": product.get("ingredients_text", ""),
+            "unit": product.get("quantity", ""),
+            "price": float(price),
+            "stock_quantity": int(stock),
+        }
+    except ValueError:
+        print("Invalid price or stock quantity.")
+        return
+    try:
+        r = requests.post(f"{BASE_URL}/inventory", json=payload)
+        r.raise_for_status()
+        print("\nItem added to inventory:")
+        print_item(r.json())
+    except requests.ConnectionError:
+        print("Error: Cannot connect to the API server.")
+    except requests.HTTPError:
+        print(f"Error {r.status_code}: {r.json().get('error')}")
 
 
 def print_menu():
